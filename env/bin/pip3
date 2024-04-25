@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/Users/adham/Desktop/API & WS/APIWS_pokedex/env/bin/python3.12" "$0" "$@"
+'''exec' "/Users/adham/Desktop/API & WS/APIWS_pokedex/env/bin/python3.10" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re
