@@ -116,7 +116,7 @@ class DjangoSession(models.Model):
 
 
 class EggGroups(models.Model):
-    id = models.IntegerField()
+    id = models.IntegerField(primary_key=True)
     identifier = models.CharField(max_length=79)
 
     class Meta:
@@ -125,7 +125,7 @@ class EggGroups(models.Model):
 
 
 class Items(models.Model):
-    id = models.IntegerField()
+    id = models.IntegerField(primary_key=True)
     identifier = models.CharField(max_length=79)
     category_id = models.IntegerField()
     cost = models.IntegerField()
@@ -138,7 +138,7 @@ class Items(models.Model):
 
 
 class Locations(models.Model):
-    id = models.IntegerField()
+    id = models.IntegerField(primary_key=True)
     region_id = models.IntegerField(blank=True, null=True)
     identifier = models.CharField(max_length=79)
 
@@ -148,7 +148,7 @@ class Locations(models.Model):
 
 
 class Moves(models.Model):
-    id = models.IntegerField()
+    id = models.IntegerField(primary_key=True)
     identifier = models.CharField(max_length=79)
     generation_id = models.IntegerField()
     type_id = models.IntegerField()
@@ -170,7 +170,7 @@ class Moves(models.Model):
 
 
 class Pokemon(models.Model):
-    id = models.IntegerField()
+    id = models.IntegerField(primary_key=True)
     identifier = models.CharField(max_length=79)
     species_id = models.IntegerField(blank=True, null=True)
     height = models.IntegerField()
@@ -238,7 +238,7 @@ class PokemonTypes(models.Model):
 
 
 class Stats(models.Model):
-    id = models.IntegerField()
+    id = models.IntegerField(primary_key=True)
     damage_class_id = models.IntegerField(blank=True, null=True)
     identifier = models.CharField(max_length=79)
     is_battle_only = models.IntegerField()
@@ -250,7 +250,7 @@ class Stats(models.Model):
 
 
 class Types(models.Model):
-    id = models.IntegerField()
+    id = models.IntegerField(primary_key=True)
     identifier = models.CharField(max_length=79)
     generation_id = models.IntegerField()
     damage_class_id = models.IntegerField(blank=True, null=True)
@@ -270,7 +270,7 @@ class UserPokemon(models.Model):
 
 
 class Users(models.Model):
-    id = models.IntegerField()
+    id = models.IntegerField(primary_key=True)
     email = models.CharField(max_length=320)
     identifier = models.CharField(max_length=79)
     password = models.CharField(max_length=79)
