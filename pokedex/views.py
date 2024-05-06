@@ -23,8 +23,6 @@ def post_item(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            
-            # Access data as a dictionary
             item = Items.objects.create(
                 id = data["id"],
                 identifier = data['identifier'],
