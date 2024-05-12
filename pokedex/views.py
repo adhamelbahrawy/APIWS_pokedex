@@ -1,6 +1,6 @@
 import json
 from django.http import JsonResponse
-from .models import Items, Moves
+from .models import Items, Moves, Pokemon
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -179,35 +179,162 @@ def update_move(request, move_id):
         return JsonResponse({'message': 'Move updated successfuly'}, status=200)
     except Items.DoesNotExist:
         return JsonResponse({'error': 'Move not found'}, status=404)
-# id
-# identifier
-# generation_id
-# type_id
-# power
-# pp
-# accuracy
-# priority
-# target_id
-# damage_class_id
-# effect_id
-# effect_chance
-# contest_type_id
-# contest_effect_id
-# super_contest_effect_id
 
+@csrf_exempt
+def get_pokemon(request, pokemon_id):
+    try:
+        pokemon = Pokemon.objects.get(id=pokemon_id)
+        data = {
+            'id': pokemon.id,
+            'identifier': pokemon.identifier,
+            'species_id': pokemon.species_id,
+            'height': pokemon.height,
+            'weight': pokemon.weight,
+            'base_experience': pokemon.base_experience,
+            'order': pokemon.order,
+            'is_default': pokemon.is_default,
+        }
+        return JsonResponse(data)
+    except Pokemon.DoesNotExist:
+        return JsonResponse({'error': 'Pokemon not found'}, status=404)
+    
+@csrf_exempt
+def post_pokemon(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            pokemon_id = data.get("id")
 
-# id = models.IntegerField(primary_key=True)
-# identifier = models.CharField(max_length=79)
-# generation_id = models.IntegerField()
-# type_id = models.IntegerField()
-# power = models.SmallIntegerField(blank=True, null=True)
-# pp = models.SmallIntegerField(blank=True, null=True)
-# accuracy = models.SmallIntegerField(blank=True, null=True)
-# priority = models.SmallIntegerField()
-# target_id = models.IntegerField()
-# damage_class_id = models.IntegerField()
-# effect_id = models.IntegerField()
-# effect_chance = models.IntegerField(blank=True, null=True)
-# contest_type_id = models.IntegerField(blank=True, null=True)
-# contest_effect_id = models.IntegerField(blank=True, null=True)
-# super_contest_effect_id = models.IntegerField(blank=True, null=True)
+            if Pokemon.objects.filter(id=pokemon_id).exists():
+                return JsonResponse({'error': f'Pokemon with ID {pokemon_id} already exists'}, status=400)
+            
+            pokemon = Pokemon.objects.create(
+                id=pokemon_id,
+                identifier = data["identifier"],
+                species_id = data["species_id"],
+                height = data["height"],
+                weight = data["weight"],
+                base_experience = data["base_experience"],
+                order = data["order"],
+                is_default = data["is_default"]
+            )
+            return JsonResponse({'message': 'Pokemon created successfully', 'id': pokemon.id}, status=201)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format in request body'}, status=400)
+        except KeyError as e:
+            return JsonResponse({'error': f'Missing required field: {e}'}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+@csrf_exempt
+def delete_pokemon(request, pokemon_id):
+    try:
+        pokemon = Pokemon.objects.get(id=pokemon_id)
+    except Pokemon.DoesNotExist:
+        return JsonResponse({'error': 'Pokemon not found'}, status=404)
+
+    if request.method == 'DELETE':
+        pokemon.delete()
+        return JsonResponse({'message': 'Pokemon deleted successfully'}, status=200)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def update_pokemon(request, pokemon_id):
+    try:
+        pokemon = Pokemon.objects.get(id=pokemon_id)
+        data = json.loads(request.body)
+
+        pokemon.id = pokemon_id
+        pokemon.identifier = data["identifier"]
+        pokemon.species_id = data["species_id"]
+        pokemon.height = data["height"]
+        pokemon.weight = data["weight"]
+        pokemon.base_experience = data["base_experience"]
+        pokemon.order = data["order"]
+        pokemon.is_default = data["is_default"]
+
+        pokemon.save()
+
+        return JsonResponse({'message': 'Pokemon updated successfully'}, status=200)
+    except Pokemon.DoesNotExist:
+        return JsonResponse({'error': 'Pokemon not found'}, status=404)
+    
+@csrf_exempt
+def get_pokemon_by_name(request, name_pokemon):
+    try:
+        pokemon = Pokemon.objects.get(identifier=name_pokemon)
+        data = {
+            'id': pokemon.id,
+            'identifier': pokemon.identifier,
+            'species_id': pokemon.species_id,
+            'height': pokemon.height,
+            'weight': pokemon.weight,
+            'base_experience': pokemon.base_experience,
+            'order': pokemon.order,
+            'is_default': pokemon.is_default
+        }
+        return JsonResponse(data)
+    except Pokemon.DoesNotExist:
+        return JsonResponse({'error': 'Pokemon not found'}, status=404)
+
+@csrf_exempt
+def update_pokemon_by_name(request, name_pokemon):
+    try:
+        pokemon = Pokemon.objects.get(identifier=name_pokemon)
+        data = json.loads(request.body)
+
+        pokemon.species_id = data["species_id"]
+        pokemon.height = data["height"]
+        pokemon.weight = data["weight"]
+        pokemon.base_experience = data["base_experience"]
+        pokemon.order = data["order"]
+        pokemon.is_default = data["is_default"]
+
+        pokemon.save()
+
+        return JsonResponse({'message': 'Pokemon updated successfully'}, status=200)
+    except Pokemon.DoesNotExist:
+        return JsonResponse({'error': 'Pokemon not found'}, status=404)
+
+@csrf_exempt
+def delete_pokemon_by_name(request, name_pokemon):
+    try:
+        pokemon = Pokemon.objects.get(identifier=name_pokemon)
+    except Pokemon.DoesNotExist:
+        return JsonResponse({'error': 'Pokemon not found'}, status=404)
+
+    if request.method == 'DELETE':
+        pokemon.delete()
+        return JsonResponse({'message': 'Pokemon deleted successfully'}, status=200)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+@csrf_exempt
+def get_pokemon_type(request, identifier_pokemon):
+    try:
+        pokemon = Pokemon.objects.get(identifier=identifier_pokemon)
+        data = {
+            'identifier': pokemon.identifier,
+            'type_id': pokemon.type_id,
+            # Add other attributes as needed
+        }
+        return JsonResponse(data)
+    except Pokemon.DoesNotExist:
+        return JsonResponse({'error': 'Pokemon not found'}, status=404)
+
+@csrf_exempt
+def update_pokemon_type(request, identifier_pokemon):
+    try:
+        pokemon = Pokemon.objects.get(identifier=identifier_pokemon)
+        data = json.loads(request.body)
+
+        # Update the type_id attribute
+        pokemon.type_id = data['type_id']
+        # Update other attributes as needed
+        
+        pokemon.save()
+
+        return JsonResponse({'message': 'Pokemon type updated successfully'}, status=200)
+    except Pokemon.DoesNotExist:
+        return JsonResponse({'error': 'Pokemon not found'}, status=404)
