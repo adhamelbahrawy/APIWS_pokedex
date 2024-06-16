@@ -273,7 +273,7 @@ class Users(models.Model):
     id = models.IntegerField(primary_key=True)
     email = models.CharField(max_length=320)
     identifier = models.CharField(max_length=79)
-    password = models.CharField(max_length=79)
+    password = models.CharField(max_length=320)
 
     class Meta:
         managed = False

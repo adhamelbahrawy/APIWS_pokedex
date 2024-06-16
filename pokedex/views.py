@@ -1,9 +1,16 @@
 import json
 from django.http import JsonResponse
-from .models import Items, Moves, Pokemon
+from .models import *
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth import authenticate
+from datetime import datetime, timedelta
+import jwt
+from django.conf import settings
+from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import make_password
 
+@csrf_exempt
 def get_item(request, item_id):
     try:
         item = Items.objects.get(id=item_id)
@@ -15,7 +22,9 @@ def get_item(request, item_id):
             'fling_power': item.fling_power,
             'fling_effect_id': item.fling_effect_id,
         }
+        
         return JsonResponse(data)
+    
     except Items.DoesNotExist:
         return JsonResponse({'error': 'Item not found'}, status=404)
 
@@ -37,11 +46,14 @@ def post_item(request):
                 fling_power=data.get('fling_power', None),
                 fling_effect_id=data.get('fling_effect_id', None),
             )
+            
             return JsonResponse({'message': 'Item created successfully', 'id': item.id}, status=201)
+        
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON format in request body'}, status=400)
         except KeyError as e:
             return JsonResponse({'error': f'Missing required field: {e}'}, status=400)
+        
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
@@ -56,6 +68,7 @@ def delete_item(request, item_id):
         item.delete()
 
         return JsonResponse({'message': 'Item deleted successfully'}, status=200)
+    
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
@@ -75,6 +88,7 @@ def update_item(request, item_id):
         item.save()
 
         return JsonResponse({'message': 'Item updated successfuly'}, status=200)
+    
     except Items.DoesNotExist:
         return JsonResponse({'error': 'Item not found'}, status=404)
 
@@ -99,7 +113,9 @@ def get_move(request, move_id):
             "contest_effect_id" : move.contest_effect_id,
             "super_contest_effect_id" : move.super_contest_effect_id
         }
+
         return JsonResponse(data)
+    
     except Items.DoesNotExist:
         return JsonResponse({'error': 'Item not found'}, status=404)
 
@@ -130,11 +146,14 @@ def post_move(request):
                 contest_effect_id = data["contest_effect_id"],
                 super_contest_effect_id = data["super_contest_effect_id"]
             )
+            
             return JsonResponse({'message': 'Move created successfully', 'id': move.id}, status=201)
+        
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON format in request body'}, status=400)
         except KeyError as e:
             return JsonResponse({'error': f'Missing required field: {e}'}, status=400)
+    
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
@@ -177,6 +196,7 @@ def update_move(request, move_id):
         move.save()
 
         return JsonResponse({'message': 'Move updated successfuly'}, status=200)
+    
     except Items.DoesNotExist:
         return JsonResponse({'error': 'Move not found'}, status=404)
 
@@ -194,7 +214,9 @@ def get_pokemon(request, pokemon_id):
             'order': pokemon.order,
             'is_default': pokemon.is_default,
         }
+        
         return JsonResponse(data)
+    
     except Pokemon.DoesNotExist:
         return JsonResponse({'error': 'Pokemon not found'}, status=404)
     
@@ -218,7 +240,9 @@ def post_pokemon(request):
                 order = data["order"],
                 is_default = data["is_default"]
             )
+            
             return JsonResponse({'message': 'Pokemon created successfully', 'id': pokemon.id}, status=201)
+        
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON format in request body'}, status=400)
         except KeyError as e:
@@ -235,7 +259,9 @@ def delete_pokemon(request, pokemon_id):
 
     if request.method == 'DELETE':
         pokemon.delete()
+        
         return JsonResponse({'message': 'Pokemon deleted successfully'}, status=200)
+    
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
@@ -257,6 +283,7 @@ def update_pokemon(request, pokemon_id):
         pokemon.save()
 
         return JsonResponse({'message': 'Pokemon updated successfully'}, status=200)
+    
     except Pokemon.DoesNotExist:
         return JsonResponse({'error': 'Pokemon not found'}, status=404)
     
@@ -274,7 +301,9 @@ def get_pokemon_by_name(request, name_pokemon):
             'order': pokemon.order,
             'is_default': pokemon.is_default
         }
+        
         return JsonResponse(data)
+    
     except Pokemon.DoesNotExist:
         return JsonResponse({'error': 'Pokemon not found'}, status=404)
 
@@ -294,6 +323,7 @@ def update_pokemon_by_name(request, name_pokemon):
         pokemon.save()
 
         return JsonResponse({'message': 'Pokemon updated successfully'}, status=200)
+    
     except Pokemon.DoesNotExist:
         return JsonResponse({'error': 'Pokemon not found'}, status=404)
 
@@ -301,15 +331,21 @@ def update_pokemon_by_name(request, name_pokemon):
 def delete_pokemon_by_name(request, name_pokemon):
     try:
         pokemon = Pokemon.objects.get(identifier=name_pokemon)
+    
     except Pokemon.DoesNotExist:
         return JsonResponse({'error': 'Pokemon not found'}, status=404)
 
     if request.method == 'DELETE':
         pokemon.delete()
         return JsonResponse({'message': 'Pokemon deleted successfully'}, status=200)
+    
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-    
+
+#
+#Pas d'intérêt réel de faire un endppint pour créer un Type de pokémon
+#
+
 @csrf_exempt
 def get_pokemon_type(request, identifier_pokemon):
     try:
@@ -319,7 +355,9 @@ def get_pokemon_type(request, identifier_pokemon):
             'type_id': pokemon.type_id,
             # Add other attributes as needed
         }
+        
         return JsonResponse(data)
+   
     except Pokemon.DoesNotExist:
         return JsonResponse({'error': 'Pokemon not found'}, status=404)
 
@@ -336,5 +374,73 @@ def update_pokemon_type(request, identifier_pokemon):
         pokemon.save()
 
         return JsonResponse({'message': 'Pokemon type updated successfully'}, status=200)
+    
     except Pokemon.DoesNotExist:
         return JsonResponse({'error': 'Pokemon not found'}, status=404)
+
+@csrf_exempt
+def register(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            id = data.get('id')
+            email = data.get('email')
+            identifier = data.get('identifier')
+            password = data.get('password')
+
+            if Users.objects.filter(email=email).exists():
+                return JsonResponse({'error': 'Email already exists'}, status=400)
+            if Users.objects.filter(identifier=identifier).exists():
+                return JsonResponse({'error': 'Identifier already exists'}, status=400)
+            if Users.objects.filter(id=id).exists():
+                return JsonResponse({'error': 'ID already exists'}, status=400)
+
+            hashed_password = make_password(password)      
+
+            user = Users.objects.create(
+                id=id,
+                email=email,
+                identifier=identifier,
+                password=hashed_password,
+            )
+            return JsonResponse({'message': 'User registered successfully', 'id': user.id}, status=201)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format in request body'}, status=400)
+        except KeyError as e:
+            return JsonResponse({'error': f'Missing required field: {e}'}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+SECRET_KEY = 'key to your pokedex'
+
+@csrf_exempt
+def connexion(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            password = data.get('password')
+
+            if not email or not password:
+                return JsonResponse({'error': 'Missing email or password'}, status=400)
+
+            try:
+                user = Users.objects.get(email=email)
+            except Users.DoesNotExist:
+                return JsonResponse({'error': 'Invalid email or password'}, status=400)
+
+            if check_password(password, user.password):
+                payload = {
+                    'user_id': user.id,
+                    'exp': datetime.utcnow() + timedelta(minutes=30),  # Token expires in 1 day
+                    'iat': datetime.utcnow()
+                }
+                token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+                return JsonResponse({'token': token}, status=200)
+            else:
+                return JsonResponse({'error': 'Invalid email or password'}, status=400)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format in request body'}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
