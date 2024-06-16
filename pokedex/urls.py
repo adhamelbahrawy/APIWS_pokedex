@@ -22,4 +22,5 @@ urlpatterns = [
     path('api/pokemon/types/<str:identifier_pokemon>/update/', views.update_pokemon_type),
     path('api/register', views.register),
     path('api/connexion', views.connexion),
+    path('api/mesPokemons/', views.mes_pokemons),
 ]

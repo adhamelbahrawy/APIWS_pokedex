@@ -10,6 +10,10 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.hashers import make_password
 
+# SECRET_KEY = settings.SECRET_KEY
+
+SECRET_KEY = "django-insecure-ynapegk1fh*ckenqp$wgx76wz^4@#^yzjco0mkfz_uww7^h6*v"
+
 @csrf_exempt
 def get_item(request, item_id):
     try:
@@ -411,8 +415,6 @@ def register(request):
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-SECRET_KEY = 'key to your pokedex'
-
 @csrf_exempt
 def connexion(request):
     if request.method == 'POST':
@@ -440,6 +442,57 @@ def connexion(request):
             else:
                 return JsonResponse({'error': 'Invalid email or password'}, status=400)
 
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format in request body'}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+def token_required(f):
+    def wrap(request, *args, **kwargs):
+        token = request.headers.get('Authorization', None)
+        if not token:
+            return JsonResponse({'error': 'Token is missing!'}, status=401)
+        try:
+            data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            user = Users.objects.get(id=data['user_id'])
+            request.user = user
+        except jwt.ExpiredSignatureError:
+            return JsonResponse({'error': 'Token has expired!'}, status=401)
+        except (jwt.InvalidTokenError, Users.DoesNotExist):
+            return JsonResponse({'error': 'Invalid token!'}, status=401)
+        return f(request, *args, **kwargs)
+    return wrap
+
+@csrf_exempt
+@token_required
+def mes_pokemons(request):
+    if request.method == 'GET':
+        pokemons = UserPokemon.objects.filter(user=request.user)
+        data = [{'pokemon_id': pokemon.pokemon_id} for pokemon in pokemons]
+        return JsonResponse(data, safe=False)
+    elif request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            pokemon_id = data['pokemon_id']
+            if UserPokemon.objects.filter(user=request.user, pokemon_id=pokemon_id).exists():
+                return JsonResponse({'error': 'Pokemon already in list'}, status=400)
+            UserPokemon.objects.create(user=request.user, pokemon_id=pokemon_id)
+            return JsonResponse({'message': 'Pokemon added successfully'}, status=201)
+        except KeyError:
+            return JsonResponse({'error': 'Missing pokemon_id in request body'}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format in request body'}, status=400)
+    elif request.method == 'DELETE':
+        try:
+            data = json.loads(request.body)
+            pokemon_id = data['pokemon_id']
+            pokemon = UserPokemon.objects.filter(user=request.user, pokemon_id=pokemon_id)
+            if not pokemon.exists():
+                return JsonResponse({'error': 'Pokemon not found in your list'}, status=404)
+            pokemon.delete()
+            return JsonResponse({'message': 'Pokemon removed successfully'}, status=200)
+        except KeyError:
+            return JsonResponse({'error': 'Missing pokemon_id in request body'}, status=400)
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON format in request body'}, status=400)
     else:
